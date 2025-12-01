@@ -1,47 +1,59 @@
 """
-Flask Application Entry Point
+Simplified Flask Application Entry Point
 """
 import os
+import sys
 from dotenv import load_dotenv
 
-# Load environment variables BEFORE importing config
+# Load environment variables BEFORE importing anything else
 load_dotenv()
 
 from flask import Flask
 from flask_cors import CORS
-from config import get_config
 from models import db
 from controllers import project_bp, page_bp, template_bp, export_bp, file_bp
 
 
-def create_app(config_class=None):
+def create_app():
     """Application factory"""
     app = Flask(__name__)
     
-    # Load configuration
-    if config_class is None:
-        config_class = get_config()
+    # Basic configuration
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-this')
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
-    app.config.from_object(config_class)
-    
-    # Ensure instance folder exists and set absolute database path
+    # Database configuration (use absolute path)
     backend_dir = os.path.dirname(os.path.abspath(__file__))
-    instance_path = os.path.join(backend_dir, 'instance')
-    os.makedirs(instance_path, exist_ok=True)
+    instance_dir = os.path.join(backend_dir, 'instance')
+    os.makedirs(instance_dir, exist_ok=True)
     
-    # Override database URI with absolute path
-    if not os.getenv('DATABASE_URL'):
-        db_file = os.path.join(instance_path, 'database.db')
-        app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_file}'
+    db_path = os.path.join(instance_dir, 'database.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
     
-    # Ensure upload folder exists
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    # File storage configuration
+    project_root = os.path.dirname(backend_dir)
+    upload_folder = os.path.join(project_root, 'uploads')
+    os.makedirs(upload_folder, exist_ok=True)
+    
+    app.config['UPLOAD_FOLDER'] = upload_folder
+    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+    app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+    
+    # AI configuration
+    app.config['GOOGLE_API_KEY'] = os.getenv('GOOGLE_API_KEY', '')
+    app.config['GOOGLE_API_BASE'] = os.getenv('GOOGLE_API_BASE', '')
+    app.config['MAX_DESCRIPTION_WORKERS'] = int(os.getenv('MAX_DESCRIPTION_WORKERS', '5'))
+    app.config['MAX_IMAGE_WORKERS'] = int(os.getenv('MAX_IMAGE_WORKERS', '8'))
+    app.config['DEFAULT_ASPECT_RATIO'] = "16:9"
+    app.config['DEFAULT_RESOLUTION'] = "2K"
+    
+    # CORS configuration
+    cors_origins = os.getenv('CORS_ORIGINS', 'http://localhost:5173').split(',')
+    app.config['CORS_ORIGINS'] = cors_origins
     
     # Initialize extensions
     db.init_app(app)
-    
-    # Enable CORS
-    CORS(app, origins=app.config['CORS_ORIGINS'])
+    CORS(app, origins=cors_origins)
     
     # Register blueprints
     app.register_blueprint(project_bp)
@@ -95,6 +107,8 @@ if __name__ == '__main__':
     Debug mode: {debug}
     
     API Base URL: http://localhost:{port}/api
+    Database: {app.config['SQLALCHEMY_DATABASE_URI']}
+    Uploads: {app.config['UPLOAD_FOLDER']}
     """)
     
     # Disable reloader to avoid database path issues in WSL
