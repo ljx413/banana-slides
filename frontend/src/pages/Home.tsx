@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Sparkles, FileText, FileEdit, ImagePlus, Paperclip } from 'lucide-react';
 import { Button, Textarea, Card, useToast, MaterialGeneratorModal, ReferenceFileCard, ReferenceFileSelector } from '@/components/shared';
 import { TemplateSelector, getTemplateFile } from '@/components/shared/TemplateSelector';
-import { listUserTemplates, type UserTemplate, uploadReferenceFile, type ReferenceFile } from '@/api/endpoints';
+import { listUserTemplates, type UserTemplate, uploadReferenceFile, type ReferenceFile, associateFileToProject } from '@/api/endpoints';
 import { useProjectStore } from '@/store/useProjectStore';
 
 type CreationType = 'idea' | 'outline' | 'description';
@@ -258,14 +258,9 @@ export const Home: React.FC = () => {
           // 批量更新文件的 project_id
           const results = await Promise.all(
             referenceFiles.map(async file => {
-              const response = await fetch(`/api/reference-files/${file.id}/associate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ project_id: projectId })
-              });
-              const data = await response.json();
-              console.log(`Associated file ${file.id}:`, data);
-              return data;
+              const response = await associateFileToProject(file.id, projectId);
+              console.log(`Associated file ${file.id}:`, response);
+              return response;
             })
           );
           console.log('Reference files associated successfully:', results);

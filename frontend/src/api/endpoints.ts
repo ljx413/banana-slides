@@ -596,3 +596,19 @@ export const triggerFileParse = async (fileId: string): Promise<ApiResponse<{ fi
   return response.data;
 };
 
+/**
+ * 将参考文件关联到项目
+ * @param fileId 文件ID
+ * @param projectId 项目ID
+ */
+export const associateFileToProject = async (
+  fileId: string,
+  projectId: string
+): Promise<ApiResponse<{ file: ReferenceFile }>> => {
+  const response = await apiClient.post<ApiResponse<{ file: ReferenceFile }>>(
+    `/api/reference-files/${fileId}/associate`,
+    { project_id: projectId }
+  );
+  return response.data;
+};
+
