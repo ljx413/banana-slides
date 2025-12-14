@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "app.py": {
+      "runtime": "vercel-python-streamlit@3.10"
+    }
+  },
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "app.py"
+    }
+  ]
+}
