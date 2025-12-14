@@ -1,9 +1,13 @@
 {
-  "docker": true,
+  "functions": {
+    "api/index.py": {
+      "runtime": "vercel-python@3.9"
+    }
+  },
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/"
+      "dest": "api/index.py"
     }
   ]
 }
