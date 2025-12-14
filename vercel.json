@@ -1,13 +1,9 @@
 {
-  "functions": {
-    "app.py": {
-      "runtime": "vercel-python@3.9"
-    }
-  },
+  "docker": true,
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "app.py"
+      "dest": "/"
     }
   ]
 }
